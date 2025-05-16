@@ -121,6 +121,10 @@ export class AppComponent {
     return this.parsedResult?.directoryDependencies?.length || 0;
   }
   
+  get totalLinesOfCode(): number {
+    return this.parsedResult?.totalLineCount || 0;
+  }
+  
   // Enhanced debug methods
   debugProcedure(procedureName: string): void {
     if (!this.parsedResult) return;

@@ -23,6 +23,7 @@ export interface ProcedureInfo {
   domain: string; // "FI"
   filePath: string; // Relative path to the .sql file
   directoryPath: string; // Relative path to the directory containing the SP, e.g., "Domain/Model/Inventory"
+  lineCount: number; // Number of lines of code in the procedure
 }
 
 export interface DirectoryDependency {
@@ -44,6 +45,7 @@ export interface ParsedDirectoryResult {
   allScannedDirectories: string[]; // Unique directory paths that contain SPs
   procedureCalls: ProcedureCalls[]; // Track which procedures call which
   errors: string[];
+  totalLineCount: number; // Total lines of code across all procedures
 }
 
 @Injectable({
@@ -204,7 +206,8 @@ export class SqlParserService {
         directoryDependencies: [], 
         allScannedDirectories: [], 
         procedureCalls: [], 
-        errors: ["Electron API not available."] 
+        errors: ["Electron API not available."],
+        totalLineCount: 0
       };
     }
 
@@ -235,12 +238,16 @@ export class SqlParserService {
             processingErrors.push(`Warning: Duplicate procedure name '${spDetails.name}' found. Using first encountered at '${proceduresMap.get(spDetails.name)?.filePath}'. Second at '${file.path}'.`);
             // Potentially overwrite or skip, here we keep the first one
         } else {
+            // Count lines in the file content
+            const lineCount = file.content.split('\n').length;
+            
             proceduresMap.set(spDetails.name, {
                 id: spDetails.name,
                 name: spDetails.name,
                 domain: spDetails.domain,
                 filePath: file.path,
-                directoryPath: directoryPath === '.' ? rootPath.split(path.sep).pop() || 'Root' : directoryPath // Handle root dir
+                directoryPath: directoryPath === '.' ? rootPath.split(path.sep).pop() || 'Root' : directoryPath, // Handle root dir
+                lineCount: lineCount
             });
         }
         allDirectoriesSet.add(directoryPath === '.' ? rootPath.split(path.sep).pop() || 'Root' : directoryPath);
@@ -294,7 +301,8 @@ export class SqlParserService {
             name: targetProcName,
             domain: domain,
             filePath: `[Virtual] ${targetProcName}.sql`,
-            directoryPath: directoryPath
+            directoryPath: directoryPath,
+            lineCount: 0 // Virtual procedures have 0 lines of code
           };
           
           // Add it to the map
@@ -331,12 +339,19 @@ export class SqlParserService {
       }
     }
 
+    // Calculate total line count from all procedures
+    let totalLineCount = 0;
+    for (const procInfo of proceduresMap.values()) {
+      totalLineCount += procInfo.lineCount;
+    }
+    
     return {
       procedures: proceduresMap,
       directoryDependencies,
       allScannedDirectories: Array.from(allDirectoriesSet).sort(),
       procedureCalls,
-      errors: processingErrors
+      errors: processingErrors,
+      totalLineCount
     };
   }
 }

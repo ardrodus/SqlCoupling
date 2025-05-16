@@ -35,6 +35,7 @@
       <p><strong>Selected Root:</strong> {{ selectedDirectoryPath || 'N/A' }}</p>
       <p><strong>Total SQL Procedures Found:</strong> {{ totalProcedures }}</p>
       <p><strong>Cross-Domain Directory Dependencies:</strong> {{ totalDependencies }}</p>
+      <p><strong>Total Lines of SQL Code:</strong> {{ totalLinesOfCode }}</p>
       <p *ngIf="parsedResult.errors.length > 0" class="warning-summary">
         Encountered {{ parsedResult.errors.length }} parsing warnings/errors.
       </p>
@@ -103,6 +104,7 @@
               <th>Procedure Name (Domain)</th>
               <th>Directory Path</th>
               <th>File Path</th>
+              <th>Lines of Code</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -111,6 +113,7 @@
               <td>{{ procEntry.value.name }} ({{ procEntry.value.domain }})</td>
               <td>{{ procEntry.value.directoryPath }}</td>
               <td>{{ procEntry.value.filePath }}</td>
+              <td>{{ procEntry.value.lineCount }}</td>
               <td>
                 <button class="debug-btn" (click)="debugProcedure(procEntry.value.name)" title="Show procedure calls">
                   Debug Calls
