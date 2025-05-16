@@ -64,8 +64,8 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
             },
             margin: { top: 10, right: 10, bottom: 10, left: 10 },
             title: n.isVirtual 
-                ? `Virtual Directory: ${n.label}\n(Referenced but not directly scanned)` 
-                : `Directory: ${n.label}`
+                ? `Virtual Domain: ${n.label}\n(Referenced but not directly scanned)` 
+                : `Domain: ${n.label}`
         };
         
         // Customize based on node type
@@ -103,7 +103,7 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
             if (pathString.match(/^[A-Z]{2}_Domain$/)) {
                 const domainPrefix = pathString.substring(0, 2);
                 nodeConfig.label = `${domainPrefix} Domain (Virtual)`;
-                nodeConfig.title = `Virtual Directory: ${domainPrefix} Domain\n(Referenced but not directly scanned)`;
+                nodeConfig.title = `Virtual Domain: ${domainPrefix} Domain\n(Referenced but not directly scanned)`;
             } 
             // Otherwise try to extract domain from path parts
             else {
@@ -233,11 +233,20 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
       // Get all edges connected to the selected node
       const selectedNodeId = params.nodes[0];
       const connectedEdgeIds = this.networkInstance!.getConnectedEdges(selectedNodeId);
+      const allEdgeIds = edges.getIds();
       
-      // Update edge colors to highlight connected edges in yellow
+      // First make all edges white (less visible)
+      edges.update(allEdgeIds.map(edgeId => ({
+        id: edgeId,
+        color: { color: '#FFFFFF', highlight: '#FFFFFF', hover: '#FFFFFF' }, // White color
+        width: 0.5 // Thinner lines for non-connected edges
+      })));
+      
+      // Then highlight connected edges in yellow
       edges.update(connectedEdgeIds.map(edgeId => ({
         id: edgeId,
-        color: { color: '#FFFF00', highlight: '#FFFF00', hover: '#FFFF00' } // Yellow color
+        color: { color: '#FFFF00', highlight: '#FFFF00', hover: '#FFFF00' }, // Yellow color
+        width: 2.5 // Make connected edges thicker for better visibility
       })));
     });
 
@@ -259,7 +268,8 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
         
         return {
             id: e.id,
-            color: { color: edgeColor, highlight: highlightColor, hover: hoverColor }
+            color: { color: edgeColor, highlight: highlightColor, hover: hoverColor },
+            width: 1.5 // Reset to original width from options
         };
       }));
     });
