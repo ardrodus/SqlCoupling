@@ -235,11 +235,16 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
       const connectedEdgeIds = this.networkInstance!.getConnectedEdges(selectedNodeId);
       const allEdgeIds = edges.getIds();
       
-      // First make all edges white (less visible)
+      // First make all edges nearly transparent (practically invisible)
       edges.update(allEdgeIds.map(edgeId => ({
         id: edgeId,
-        color: { color: '#FFFFFF', highlight: '#FFFFFF', hover: '#FFFFFF' }, // White color
-        width: 0.5 // Thinner lines for non-connected edges
+        color: { 
+          opacity: 0.05, // Nearly transparent
+          color: '#CCCCCC',
+          highlight: '#CCCCCC',
+          hover: '#CCCCCC'
+        },
+        width: 0.2 // Very thin lines for non-connected edges
       })));
       
       // Color edges based on direction - inbound (yellow) vs outbound (red)
@@ -257,7 +262,8 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
           color: { 
             color: isOutbound ? '#FF0000' : '#FFFF00', // Red for outbound, Yellow for inbound
             highlight: isOutbound ? '#FF0000' : '#FFFF00',
-            hover: isOutbound ? '#FF0000' : '#FFFF00'
+            hover: isOutbound ? '#FF0000' : '#FFFF00',
+            opacity: 1.0 // Fully visible
           },
           width: 2.5 // Make connected edges thicker for better visibility
         });
@@ -282,7 +288,12 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
         
         return {
             id: e.id,
-            color: { color: edgeColor, highlight: highlightColor, hover: hoverColor },
+            color: { 
+              color: edgeColor, 
+              highlight: highlightColor, 
+              hover: hoverColor,
+              opacity: 1.0 // Restore full visibility
+            },
             width: 1.5 // Reset to original width from options
         };
       }));
