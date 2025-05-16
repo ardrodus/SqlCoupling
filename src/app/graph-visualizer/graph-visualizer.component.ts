@@ -228,6 +228,42 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
     }
     this.networkInstance = new Network(this.networkContainer.nativeElement, data, options);
 
+    // Add event listener for node selection to highlight connecting edges
+    this.networkInstance.on('selectNode', (params) => {
+      // Get all edges connected to the selected node
+      const selectedNodeId = params.nodes[0];
+      const connectedEdgeIds = this.networkInstance!.getConnectedEdges(selectedNodeId);
+      
+      // Update edge colors to highlight connected edges in yellow
+      edges.update(connectedEdgeIds.map(edgeId => ({
+        id: edgeId,
+        color: { color: '#FFFF00', highlight: '#FFFF00', hover: '#FFFF00' } // Yellow color
+      })));
+    });
+
+    // Add event listener for deselection to reset edge colors
+    this.networkInstance.on('deselectNode', () => {
+      // Reset all edges to their original colors
+      edges.update(this.edgesData.map(e => {
+        // Default colors for same-domain dependencies
+        let edgeColor = '#90EE90'; // LightGreen
+        let highlightColor = '#32CD32'; // LimeGreen
+        let hoverColor = '#3CB371'; // MediumSeaGreen
+        
+        // Use different colors for cross-domain dependencies
+        if (e.isCrossDomain) {
+            edgeColor = '#FF7F50'; // Coral
+            highlightColor = '#FF4500'; // OrangeRed
+            hoverColor = '#FF6347'; // Tomato
+        }
+        
+        return {
+            id: e.id,
+            color: { color: edgeColor, highlight: highlightColor, hover: hoverColor }
+        };
+      }));
+    });
+
     // Add title using DOM manipulation (Vis.js doesn't have a built-in graph title feature)
     // This is a simple way; for complex UIs, integrate into Angular template
     const titleEl = this.networkContainer.nativeElement.querySelector('.graph-title-overlay');
