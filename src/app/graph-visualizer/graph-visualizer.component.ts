@@ -242,12 +242,26 @@ export class GraphVisualizerComponent implements OnChanges, AfterViewInit, OnDes
         width: 0.5 // Thinner lines for non-connected edges
       })));
       
-      // Then highlight connected edges in yellow
-      edges.update(connectedEdgeIds.map(edgeId => ({
-        id: edgeId,
-        color: { color: '#FFFF00', highlight: '#FFFF00', hover: '#FFFF00' }, // Yellow color
-        width: 2.5 // Make connected edges thicker for better visibility
-      })));
+      // Color edges based on direction - inbound (yellow) vs outbound (red)
+      connectedEdgeIds.forEach(edgeId => {
+        // Get the edge data to determine direction
+        const edge = edges.get(edgeId);
+        
+        // Skip if edge is null (shouldn't happen but TypeScript needs this check)
+        if (edge === null) return;
+        
+        const isOutbound = edge.from === selectedNodeId;
+        
+        edges.update({
+          id: edgeId,
+          color: { 
+            color: isOutbound ? '#FF0000' : '#FFFF00', // Red for outbound, Yellow for inbound
+            highlight: isOutbound ? '#FF0000' : '#FFFF00',
+            hover: isOutbound ? '#FF0000' : '#FFFF00'
+          },
+          width: 2.5 // Make connected edges thicker for better visibility
+        });
+      });
     });
 
     // Add event listener for deselection to reset edge colors
