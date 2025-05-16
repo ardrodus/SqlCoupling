@@ -52,7 +52,7 @@ export class AppComponent {
           this.selectedDirectoryPath = dirPath;
           this.infoMessage = `Selected directory: ${dirPath}. Analyzing...`;
           this.cdr.detectChanges();
-          this.parsedResult = await this.sqlParser.analyzeDirectory(this.showAllDependencies); // Pass the dependency filter setting
+          this.parsedResult = await this.sqlParser.analyzeDirectory(dirPath, this.showAllDependencies); // Pass the directory path and dependency filter setting
           this.infoMessage = `Analysis complete for: ${dirPath}.`;
 
           if (this.parsedResult) {

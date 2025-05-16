@@ -193,7 +193,7 @@ export class SqlParserService {
     return createMatch ? createMatch[1] : '';
   }
 
-  async analyzeDirectory(showAllDependencies = true): Promise<ParsedDirectoryResult | null> {
+  async analyzeDirectory(directoryPath: string, showAllDependencies = true): Promise<ParsedDirectoryResult | null> {
     // Set the dependency display mode
     this.showAllDependencies = showAllDependencies;
     
@@ -208,9 +208,10 @@ export class SqlParserService {
       };
     }
 
-    const rootPath = await window.electronAPI.openDirectoryDialog();
+    // Use the directory path that was already selected
+    const rootPath = directoryPath;
     if (!rootPath) {
-      return null; // User cancelled
+      return null; // No path provided
     }
 
     const { filesData, errors: fsErrors } = await window.electronAPI.readDirectory(rootPath);
