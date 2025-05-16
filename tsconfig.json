@@ -1,7 +1,13 @@
 /* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
   "compileOnSave": false,
-  "compilerOptions": {
+	"compilerOptions": {
+		"paths": {
+			"path": [
+			"node_modules/path-browserify"
+			]
+			
+		},
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,

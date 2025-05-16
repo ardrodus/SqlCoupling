@@ -1,16 +1,22 @@
+// src/app/app.module.ts
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 
 import { AppComponent } from './app.component';
+import { GraphVisualizerComponent } from './graph-visualizer/graph-visualizer.component';
+// SqlParserService is providedIn: 'root'
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    GraphVisualizerComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    FormsModule
   ],
-  providers: [],
+  providers: [], // SqlParserService provided in root
   bootstrap: [AppComponent]
 })
 export class AppModule { }

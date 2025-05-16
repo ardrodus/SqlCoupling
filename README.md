@@ -1,27 +1,81 @@
-# SqlDependencyAnalyzer
+# SQL Dependency Analyzer
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.2.7.
+A desktop application built with Angular and Electron for analyzing cross-domain dependencies between SQL stored procedures in a directory structure.
 
-## Development server
+## Overview
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+The SQL Dependency Analyzer helps database developers identify and visualize dependencies between SQL stored procedures, with a focus on cross-domain dependencies. It analyzes SQL files using naming conventions and dependency detection to create a visual graph of directory-level dependencies.
 
-## Code scaffolding
+## Features
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- **SQL Procedure Analysis**: Scans directories containing SQL stored procedure files
+- **Dependency Detection**: Identifies procedure calls between files using regex pattern matching
+- **Cross-Domain Tracking**: Highlights dependencies between different domains (marked by prefix conventions)
+- **Directory-Level Visualization**: Displays dependencies as a hierarchical graph between directories
+- **Interactive Graph**: Zoom, pan, and explore the dependency graph
+- **Filtering Options**: Toggle between viewing all dependencies or only cross-domain dependencies
+- **Detailed Reporting**: Shows lists of procedures and their dependencies
 
-## Build
+## Technical Architecture
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+- **Frontend**: Angular 15.x
+- **Visualization**: vis-network library for interactive graph visualization
+- **Desktop App**: Electron for cross-platform desktop capabilities
+- **File Handling**: Node.js APIs (via Electron) for file system access
 
-## Running unit tests
+## Requirements
+
+- Node.js 14+
+- Angular CLI 15.x
+- Electron 36.x
+
+## Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Build and run the Electron app:
+   ```
+   npm run electron-dev
+   ```
+
+## Usage
+
+1. Launch the application
+2. Click "Select Directory and Analyze SQL" 
+3. Choose a directory containing SQL stored procedure files
+4. Toggle "Show All Dependencies" to view all or only cross-domain dependencies
+5. Explore the graph and detailed information in the tables below
+6. Use "Debug Calls" on specific procedures to see their dependencies
+
+## SQL Naming Conventions
+
+The analyzer works best with SQL files following these naming conventions:
+- Filename pattern: `XX_ProcedureName_SP.sql` where XX is a 2-letter domain code
+- Procedure name inside file matches the filename
+
+## Development
+
+Run in development mode:
+```
+npm run electron-dev
+```
+
+Build the application:
+```
+npm run build
+```
+
+## Angular Development Commands
+
+Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`.
+
+Run `ng generate component component-name` to generate a new component.
 
 Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
-## Running end-to-end tests
+## License
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+[Include your license information here]
