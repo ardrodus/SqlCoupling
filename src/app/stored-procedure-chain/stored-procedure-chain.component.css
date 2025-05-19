@@ -1,0 +1,62 @@
+.file-selector{margin:15px 0;background-color:#f5f5f5;padding:15px;border-radius:5px;border:1px solid #ddd}
+.file-selector h3{margin-top:0;margin-bottom:10px;color:#333}
+
+/* Search container styles */
+.search-container {
+  position: relative;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 30px 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.clear-search {
+  position: absolute;
+  right: 5px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 5px;
+}
+
+.clear-search:hover {
+  color: #555;
+}
+
+.file-count {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
+.no-results {
+  padding: 15px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.file-list{max-height:300px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;background-color:#fff}
+.file-item{padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;transition:background-color .2s ease;font-family:monospace}
+.file-item:last-child{border-bottom:none}
+.file-item:hover{background-color:#f0f7ff}
+.file-item.selected{background-color:#e0f0ff;font-weight:700}
+.debug-info{margin:15px 0;max-height:300px;overflow-y:auto;background-color:#f8f9fa;padding:10px;border-radius:4px;border:1px solid #ddd}
+.procedure-list th,.procedure-list td{border:1px solid #ddd;padding:8px;text-align:left}
+.procedure-list th{background-color:#e9ecef;font-weight:700}
+.procedure-list tr:nth-child(even){background-color:#f8f9fa}

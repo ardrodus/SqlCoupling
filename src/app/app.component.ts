@@ -20,7 +20,7 @@ interface DebugInfo {
 })
 
 export class AppComponent {
-  appTitle = 'SQL Cross-Domain Directory Dependency Analyzer';
+  appTitle = 'SQL Cross-Domain Dependency Analyzer';
   parsedResult: ParsedDirectoryResult | null = null;
   graphNodes: Node[] = [];
   graphEdges: Edge[] = [];
@@ -30,7 +30,10 @@ export class AppComponent {
   selectedDirectoryPath: string | null = null;
   showAllDependencies: boolean = true; // Default to showing all dependencies
   debugInfo: DebugInfo | null = null; // For debugging procedure calls
-  activeTab: string = 'dependencies'; // Default active tab
+  
+  // Navigation state
+  activeFeature: string = 'dependency-analyzer'; // Main feature selection
+  dirAnalysisTab: string = 'dependencies'; // Tab within directory analysis feature
 
   constructor(
     private sqlParser: SqlParserService,
@@ -208,5 +211,19 @@ export class AppComponent {
     this.debugInfo = null;
   }
   
-  // Statistics methods moved to ProcedureChainComponent
+  /**
+   * Select a main feature from the navigation menu
+   */
+  selectFeature(feature: string, event?: MouseEvent): void {
+    if (event) {
+      event.preventDefault(); // Prevent default link behavior
+    }
+    
+    // Reset error and info messages when switching features
+    this.errorMessage = null;
+    this.infoMessage = null;
+    
+    this.activeFeature = feature;
+    this.cdr.detectChanges();
+  }
 }

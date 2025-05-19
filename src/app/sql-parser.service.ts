@@ -1,12 +1,13 @@
 // src/app/sql-parser.service.ts
 import { Injectable } from '@angular/core';
-import * as path from 'path-browserify'; // Use path-browserify for consistent path ops in browser context
+import { path } from './path-polyfill'; // Use our path polyfill for consistent path ops in browser context
 
 // Explicitly tell TypeScript about the electronAPI if not using a global type definition
 declare global {
   interface Window {
     electronAPI?: {
       openDirectoryDialog: () => Promise<string | null>;
+      openFileDialog: () => Promise<string | null>;
       readDirectory: (dirPath: string) => Promise<{ filesData: SqlFile[]; errors: string[] }>;
     };
   }
@@ -95,9 +96,11 @@ export class SqlParserService {
     return noComments;
   }
 
-  private findExecCalls(sqlContent: string): string[] {
+  // Made public so it can be used by ProcedureChainService
+  findExecCalls(sqlContent: string): string[] {
     // Store the original content for reference
     const originalContent = sqlContent;
+    console.log(`Finding EXEC calls in SQL content of length: ${sqlContent.length}`);
     
     // Clean comments for regex-based detection
     const cleanedContent = this.removeSqlComments(sqlContent);
@@ -158,31 +161,6 @@ export class SqlParserService {
       }
     }
     
-    // 6. Special case check for specific procedures of interest
-    // This is a fallback check for critical procedures that must be detected
-    const criticalProcedures = [
-      'FI_PostFuelInventory_SP',
-      'WI_PostRepack_PostFuelTransferOut_SP'
-    ];
-    
-    // Check in original content (with comments) to find any mentions, even in comments
-    for (const proc of criticalProcedures) {
-      if (originalContent.includes(proc) && !proc.includes(this.extractProcedureNameFromContent(originalContent))) {
-        execCalls.push(proc);
-      }
-    }
-    
-    // Check for any pattern that looks like a procedure call with FI_Post in the name
-    if (originalContent.includes('FI_Post') && 
-        !execCalls.some(call => call.startsWith('FI_Post'))) {
-      const fiPostMatch = originalContent.match(/FI_Post[A-Za-z0-9_]+?_SP/i);
-      if (fiPostMatch) {
-        execCalls.push(fiPostMatch[0]);
-      } else {
-        // Last resort - add the specific procedure we know should be there
-        execCalls.push('FI_PostFuelInventory_SP');
-      }
-    }
     
     // Remove duplicates
     return [...new Set(execCalls)];
@@ -246,11 +224,11 @@ export class SqlParserService {
                 name: spDetails.name,
                 domain: spDetails.domain,
                 filePath: file.path,
-                directoryPath: directoryPath === '.' ? rootPath.split(path.sep).pop() || 'Root' : directoryPath, // Handle root dir
+                directoryPath: directoryPath === '.' ? path.split(rootPath).pop() || 'Root' : directoryPath, // Handle root dir
                 lineCount: lineCount
             });
         }
-        allDirectoriesSet.add(directoryPath === '.' ? rootPath.split(path.sep).pop() || 'Root' : directoryPath);
+        allDirectoriesSet.add(directoryPath === '.' ? path.split(rootPath).pop() || 'Root' : directoryPath);
       } else {
         // Optional: Log files that don't match SP naming convention
         // console.log(`Skipping file (does not match SP naming): ${file.path}`);
@@ -267,12 +245,6 @@ export class SqlParserService {
 
       let calledProcNames = this.findExecCalls(fileData.content);
       
-      // Special case handling for critical procedures known to have dependencies
-      if (sourceProcName === 'WI_PostRepack_PostFuelTransferOut_SP' && 
-          !calledProcNames.includes('FI_PostFuelInventory_SP')) {
-        console.log(`Special handling: Adding known dependency for ${sourceProcName} -> FI_PostFuelInventory_SP`);
-        calledProcNames.push('FI_PostFuelInventory_SP');
-      }
       
       // Track all procedure calls for debugging
       procedureCalls.push({

@@ -6,13 +6,15 @@ import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
 import { GraphVisualizerComponent } from './graph-visualizer/graph-visualizer.component';
 import { ProcedureChainComponent } from './procedure-chain/procedure-chain.component';
+import { StoredProcedureChainComponent } from './stored-procedure-chain/stored-procedure-chain.component';
 // SqlParserService is providedIn: 'root'
 
 @NgModule({
   declarations: [
     AppComponent,
     GraphVisualizerComponent,
-    ProcedureChainComponent
+    ProcedureChainComponent,
+    StoredProcedureChainComponent
   ],
   imports: [
     BrowserModule,

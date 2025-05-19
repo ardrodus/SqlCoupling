@@ -2,19 +2,21 @@
 <div class="container">
   <header>
     <h1>{{ appTitle }}</h1>
-    <div class="analysis-controls">
-      <div class="analysis-options">
-        <label>
-          <input type="checkbox" [(ngModel)]="showAllDependencies">
-          Show All Dependencies (Including Same-Domain)
-        </label>
-      </div>
-      <button (click)="selectAndAnalyzeDirectory()" [disabled]="isLoading">
-        {{ isLoading ? 'Analyzing...' : 'Select Directory and Analyze SQL' }}
-      </button>
-    </div>
   </header>
 
+  <!-- Main Navigation Menu -->
+  <nav class="main-menu">
+    <ul>
+      <li [class.active]="activeFeature === 'dependency-analyzer'">
+        <a href="#" (click)="selectFeature('dependency-analyzer', $event)">Directory Dependency Analyzer</a>
+      </li>
+      <li [class.active]="activeFeature === 'procedure-chain'">
+        <a href="#" (click)="selectFeature('procedure-chain', $event)">Stored Procedure Chain Analyzer</a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Status Messages (common for all features) -->
   <div *ngIf="isLoading || infoMessage" class="status-messages">
     <p *ngIf="isLoading" class="loading">
       <span class="spinner"></span> {{ infoMessage || 'Loading...' }}
@@ -24,77 +26,94 @@
 
   <div *ngIf="errorMessage" class="status-messages error">
     <p><strong>Error:</strong> {{ errorMessage }}</p>
-    <p *ngIf="parsedResult && parsedResult.errors.length > 0">
+    <p *ngIf="parsedResult && parsedResult.errors && parsedResult.errors.length > 0">
       See browser console (View > Toggle Developer Tools) for detailed parsing warnings.
     </p>
   </div>
 
-  <div *ngIf="parsedResult && !isLoading" class="results-container">
-    <section class="summary">
-      <h2>Analysis Summary</h2>
-      <p><strong>Selected Root:</strong> {{ selectedDirectoryPath || 'N/A' }}</p>
-      <p><strong>Total SQL Procedures Found:</strong> {{ totalProcedures }}</p>
-      <p><strong>Cross-Domain Directory Dependencies:</strong> {{ totalDependencies }}</p>
-      <p><strong>Total Lines of SQL Code:</strong> {{ totalLinesOfCode }}</p>
-      <p *ngIf="parsedResult.errors.length > 0" class="warning-summary">
-        Encountered {{ parsedResult.errors.length }} parsing warnings/errors.
-      </p>
-    </section>
-
-    <!-- Tab Navigation -->
-    <div class="tabs-container">
-      <div class="tabs">
-        <button 
-          class="tab-button" 
-          [class.active]="activeTab === 'dependencies'" 
-          (click)="activeTab = 'dependencies'">
-          Dependencies
-        </button>
-        <button 
-          class="tab-button" 
-          [class.active]="activeTab === 'newFeature'" 
-          (click)="activeTab = 'newFeature'">
-          Statistics
+  <!-- Directory Dependency Analyzer Feature -->
+  <div *ngIf="activeFeature === 'dependency-analyzer'" class="feature-container">
+    <div class="feature-header">
+      <h2>Directory Dependency Analyzer</h2>
+      <div class="analysis-controls">
+        <div class="analysis-options">
+          <label>
+            <input type="checkbox" [(ngModel)]="showAllDependencies">
+            Show All Dependencies (Including Same-Domain)
+          </label>
+        </div>
+        <button (click)="selectAndAnalyzeDirectory()" [disabled]="isLoading">
+          {{ isLoading ? 'Analyzing...' : 'Select Directory and Analyze SQL' }}
         </button>
       </div>
     </div>
 
-    <!-- Dependencies Tab Content -->
-    <div *ngIf="activeTab === 'dependencies'">
-      <section class="graph-section" *ngIf="graphNodes.length > 0 || graphEdges.length > 0">
-        <h3>Dependency Graph</h3>
-        <app-graph-visualizer
-          [nodesData]="graphNodes"
-          [edgesData]="graphEdges"
-          [graphTitle]="showAllDependencies ? 'Directory Dependencies (All)' : 'Directory Cross-Domain Dependencies'">
-        </app-graph-visualizer>
-        
-        <div class="legend">
-          <div class="legend-item">
-            <span class="legend-color" style="background-color: #90EE90;"></span>
-            <span>Same-Domain Dependency</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background-color: #FF7F50;"></span>
-            <span>Cross-Domain Dependency</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background-color: #FFFF00;"></span>
-            <span>Inbound Dependency (when node selected)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background-color: #FF0000;"></span>
-            <span>Outbound Dependency (when node selected)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background-color: #FFFACD; border: 2px dashed #FF7F50; position: relative;">
-              <i class="fas fa-folder-open" style="position: absolute; font-size: 12px; top: 2px; left: 2px; color: #FF7F50;"></i>
-            </span>
-            <span>Virtual Directory (Referenced but not directly scanned)</span>
-          </div>
-        </div>
+    <!-- Directory Analysis Results -->
+    <div *ngIf="parsedResult && !isLoading" class="results-container">
+      <section class="summary">
+        <h3>Analysis Summary</h3>
+        <p><strong>Selected Root:</strong> {{ selectedDirectoryPath || 'N/A' }}</p>
+        <p><strong>Total SQL Procedures Found:</strong> {{ totalProcedures }}</p>
+        <p><strong>Cross-Domain Directory Dependencies:</strong> {{ totalDependencies }}</p>
+        <p><strong>Total Lines of SQL Code:</strong> {{ totalLinesOfCode }}</p>
+        <p *ngIf="parsedResult.errors.length > 0" class="warning-summary">
+          Encountered {{ parsedResult.errors.length }} parsing warnings/errors.
+        </p>
       </section>
-      <section class="graph-section" *ngIf="parsedResult && (graphNodes.length === 0 && graphEdges.length === 0) && parsedResult.procedures.size > 0">
+
+      <!-- Dependency Analysis Tabs -->
+      <div class="tabs-container">
+        <div class="tabs">
+          <button 
+            class="tab-button" 
+            [class.active]="dirAnalysisTab === 'dependencies'" 
+            (click)="dirAnalysisTab = 'dependencies'">
+            Dependencies Graph
+          </button>
+          <button 
+            class="tab-button" 
+            [class.active]="dirAnalysisTab === 'statistics'" 
+            (click)="dirAnalysisTab = 'statistics'">
+            Statistics
+          </button>
+        </div>
+      </div>
+
+      <!-- Dependencies Graph Tab Content -->
+      <div *ngIf="dirAnalysisTab === 'dependencies'">
+        <section class="graph-section" *ngIf="graphNodes.length > 0 || graphEdges.length > 0">
+          <h3>Dependency Graph</h3>
+          <app-graph-visualizer
+            [nodesData]="graphNodes"
+            [edgesData]="graphEdges"
+            [graphTitle]="showAllDependencies ? 'Directory Dependencies (All)' : 'Directory Cross-Domain Dependencies'">
+          </app-graph-visualizer>
+          
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: #90EE90;"></span>
+              <span>Same-Domain Dependency</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: #FF7F50;"></span>
+              <span>Cross-Domain Dependency</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: #FFFF00;"></span>
+              <span>Inbound Dependency (when node selected)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: #FF0000;"></span>
+              <span>Outbound Dependency (when node selected)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: #FFFACD; border: 2px dashed #FF7F50; position: relative;"></span>
+              <span>Virtual Directory (Referenced but not directly scanned)</span>
+            </div>
+          </div>
+        </section>
+        
+        <section class="graph-section" *ngIf="parsedResult && (graphNodes.length === 0 && graphEdges.length === 0) && parsedResult.procedures.size > 0">
           <h3>Dependency Graph</h3>
           <p>No dependencies found to graph. This could be due to:</p>
           <ul>
@@ -103,70 +122,82 @@
             <li>Procedure calls use non-standard patterns that couldn't be detected</li>
           </ul>
           <p>Try to select a higher-level directory containing multiple domain directories, or check your SQL files for proper procedure calls.</p>
-      </section>
+        </section>
 
-
-      <details class="details-section" *ngIf="totalDependencies > 0">
-        <summary>Cross-Domain Directory Dependencies List ({{ totalDependencies }})</summary>
-        <ul>
-          <li *ngFor="let dep of parsedResult!.directoryDependencies">
-            <code>{{ dep.sourceDirectory }}</code> → <code>{{ dep.targetDirectory }}</code>
-          </li>
-        </ul>
-      </details>
-
-      <details class="details-section" *ngIf="totalProcedures > 0">
-        <summary>Detected Procedures ({{ totalProcedures }})</summary>
-        <div class="procedure-list">
-          <table>
-            <thead>
-              <tr>
-                <th>Procedure Name (Domain)</th>
-                <th>Directory Path</th>
-                <th>File Path</th>
-                <th>Lines of Code</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let procEntry of parsedResult!.procedures | keyvalue">
-                <td>{{ procEntry.value.name }} ({{ procEntry.value.domain }})</td>
-                <td>{{ procEntry.value.directoryPath }}</td>
-                <td>{{ procEntry.value.filePath }}</td>
-                <td>{{ procEntry.value.lineCount }}</td>
-                <td>
-                  <button class="debug-btn" (click)="debugProcedure(procEntry.value.name)" title="Show procedure calls">
-                    Debug Calls
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </details>
-    </div>
-
-    <!-- Stored Procedure Chain Tab Content -->
-    <div *ngIf="activeTab === 'newFeature'" class="new-feature-tab">
-      <app-procedure-chain [parsedResult]="parsedResult"></app-procedure-chain>
-    </div>
-    
-    <!-- Debug modal for procedure calls -->
-    <div *ngIf="debugInfo" class="debug-modal">
-      <div class="debug-modal-content">
-        <h3>Procedure Call Debug: {{ debugInfo.procedureName }}</h3>
-        <div class="debug-info">
-          <p *ngIf="debugInfo.calls.length === 0">No calls detected from this procedure.</p>
-          <ul *ngIf="debugInfo.calls.length > 0">
-            <li *ngFor="let call of debugInfo.calls">{{ call }}</li>
+        <details class="details-section" *ngIf="totalDependencies > 0">
+          <summary>Cross-Domain Directory Dependencies List ({{ totalDependencies }})</summary>
+          <ul>
+            <li *ngFor="let dep of parsedResult!.directoryDependencies">
+              <code>{{ dep.sourceDirectory }}</code> → <code>{{ dep.targetDirectory }}</code>
+            </li>
           </ul>
-        </div>
-        <button class="close-btn" (click)="closeDebug()">Close</button>
+        </details>
       </div>
+
+      <!-- Statistics Tab Content -->
+      <div *ngIf="dirAnalysisTab === 'statistics'">
+        <app-procedure-chain [parsedResult]="parsedResult"></app-procedure-chain>
+
+        <details class="details-section" *ngIf="totalProcedures > 0">
+          <summary>Detected Procedures ({{ totalProcedures }})</summary>
+          <div class="procedure-list">
+            <table>
+              <thead>
+                <tr>
+                  <th>Procedure Name (Domain)</th>
+                  <th>Directory Path</th>
+                  <th>File Path</th>
+                  <th>Lines of Code</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let procEntry of parsedResult!.procedures | keyvalue">
+                  <td>{{ procEntry.value.name }} ({{ procEntry.value.domain }})</td>
+                  <td>{{ procEntry.value.directoryPath }}</td>
+                  <td>{{ procEntry.value.filePath }}</td>
+                  <td>{{ procEntry.value.lineCount }}</td>
+                  <td>
+                    <button class="debug-btn" (click)="debugProcedure(procEntry.value.name)" title="Show procedure calls">
+                      Debug Calls
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+      
+      <!-- Debug modal for procedure calls -->
+      <div *ngIf="debugInfo" class="debug-modal">
+        <div class="debug-modal-content">
+          <h3>Procedure Call Debug: {{ debugInfo.procedureName }}</h3>
+          <div class="debug-info">
+            <p *ngIf="debugInfo.calls.length === 0">No calls detected from this procedure.</p>
+            <ul *ngIf="debugInfo.calls.length > 0">
+              <li *ngFor="let call of debugInfo.calls">{{ call }}</li>
+            </ul>
+          </div>
+          <button class="close-btn" (click)="closeDebug()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!parsedResult && !isLoading && !infoMessage && !errorMessage" class="no-results">
+      <p>Click the "Select Directory and Analyze SQL" button to start the directory dependency analysis.</p>
     </div>
   </div>
 
-  <div *ngIf="!parsedResult && !isLoading && !infoMessage && !errorMessage" class="no-results">
-    <p>Click the button above to select a directory and start the analysis.</p>
+  <!-- Stored Procedure Chain Analyzer Feature -->
+  <div *ngIf="activeFeature === 'procedure-chain'" class="feature-container">
+    <div class="feature-header">
+      <h2>Stored Procedure Chain Analyzer</h2>
+      <p class="feature-description">
+        Analyze the execution chain of a single stored procedure to see all procedures it calls recursively.
+      </p>
+    </div>
+    
+    <app-stored-procedure-chain></app-stored-procedure-chain>
   </div>
 </div>

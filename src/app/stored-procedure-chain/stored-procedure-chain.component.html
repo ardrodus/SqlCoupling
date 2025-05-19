@@ -1,0 +1,143 @@
+<div class="procedure-chain-container">
+  <section class="controls">
+    <button (click)="selectAndAnalyzeProcedure()" [disabled]="isLoading">
+      {{ isLoading ? 'Analyzing...' : 'Select SQL File & Analyze Chain' }}
+    </button>
+    <p class="instructions">
+      Select a SQL stored procedure file to analyze its execution chain. The system will recursively find all procedures it calls.
+    </p>
+  </section>
+
+  <div *ngIf="isLoading || infoMessage" class="status-messages">
+    <p *ngIf="isLoading" class="loading">
+      <span class="spinner"></span> {{ infoMessage || 'Loading...' }}
+    </p>
+    <ng-container *ngIf="!isLoading && infoMessage">
+      <div class="info" [innerHTML]="formatInfoMessage(infoMessage)"></div>
+    </ng-container>
+  </div>
+
+  <div *ngIf="errorMessage" class="status-messages error">
+    <p><strong>Error:</strong> {{ errorMessage }}</p>
+  </div>
+  
+  <!-- File Selector UI -->
+  <div *ngIf="showFileSelector && availableSqlFiles.length > 0" class="file-selector">
+    <h3>Select a SQL stored procedure file:</h3>
+    
+    <!-- Search bar for filtering stored procedures -->
+    <div class="search-container">
+      <input 
+        type="text" 
+        placeholder="Search stored procedures..." 
+        [(ngModel)]="searchQuery"
+        (input)="filterStoredProcedures(searchQuery)"
+        class="search-input"
+      />
+      <button 
+        *ngIf="searchQuery" 
+        (click)="filterStoredProcedures('')" 
+        class="clear-search"
+      >
+        ✕
+      </button>
+    </div>
+    
+    <!-- Show file count and filtered count if searching -->
+    <div class="file-count" *ngIf="filteredSqlFiles.length !== availableSqlFiles.length">
+      Showing {{ filteredSqlFiles.length }} of {{ availableSqlFiles.length }} procedures
+    </div>
+    
+    <div class="file-list">
+      <div 
+        *ngFor="let file of filteredSqlFiles; let i = index" 
+        class="file-item" 
+        [class.selected]="availableSqlFiles.indexOf(file) === selectedFileIndex"
+        (click)="selectFile(availableSqlFiles.indexOf(file))">
+        {{ file.name }}
+      </div>
+      
+      <!-- Show message when no results found -->
+      <div *ngIf="filteredSqlFiles.length === 0" class="no-results">
+        No stored procedures matching "{{ searchQuery }}"
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="procedureChain && !isLoading" class="results-container">
+    <section class="chain-summary">
+      <h3>Procedure Chain Summary</h3>
+      <p><strong>Selected Procedure:</strong> {{ selectedFilePath }}</p>
+      <p><strong>Total Procedures in Chain:</strong> {{ totalProcedures }}</p>
+      <p><strong>Total Procedure Calls:</strong> {{ totalCalls }}</p>
+      <p><strong>Cross-Domain Calls:</strong> {{ crossDomainCalls }}</p>
+      <p *ngIf="missingProcedures > 0" class="warning-summary">
+        <strong>Missing Procedures:</strong> {{ missingProcedures }} (files not found)
+      </p>
+    </section>
+
+    <section class="chain-graph" *ngIf="graphNodes.length > 0">
+      <h3>Execution Chain Graph</h3>
+      <app-graph-visualizer
+        [nodesData]="graphNodes"
+        [edgesData]="graphEdges"
+        [graphTitle]="'Stored Procedure Execution Chain'">
+      </app-graph-visualizer>
+      
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-color root"></span>
+          <span>Root Procedure</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color missing"></span>
+          <span>Missing Procedure (File Not Found)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #90EE90;"></span>
+          <span>Same-Domain Call</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #FF7F50;"></span>
+          <span>Cross-Domain Call</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #FFFF00;"></span>
+          <span>Inbound Call (when procedure selected)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #FF0000;"></span>
+          <span>Outbound Call (when procedure selected)</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="chain-details" *ngIf="procedureChain?.nodes?.length">
+      <h3>Procedure Details</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Procedure Name</th>
+            <th>Domain</th>
+            <th>Level</th>
+            <th>Calls</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let node of procedureChain!.nodes" [class.root-procedure]="node.isRoot" [class.missing-procedure]="node.isMissing">
+            <td>{{ node.name }}</td>
+            <td>{{ node.domain }}</td>
+            <td>{{ node.level }}</td>
+            <td>{{ node.calls.length }}</td>
+            <td>
+              <span *ngIf="node.isRoot" class="status-badge root">Root</span>
+              <span *ngIf="node.isMissing" class="status-badge missing">Missing</span>
+              <span *ngIf="!node.isRoot && !node.isMissing" class="status-badge normal">Found</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
