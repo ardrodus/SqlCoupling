@@ -269,6 +269,14 @@ export class StoredProcedureChainComponent {
     return this.procedureChain?.edges.filter(e => e.isCrossDomain).length || 0;
   }
   
+  get detectedCycles(): number {
+    return this.procedureChain?.cycles?.length || 0;
+  }
+  
+  get crossDomainCycles(): number {
+    return this.procedureChain?.cycles?.filter(c => c.isCrossDomain).length || 0;
+  }
+  
   // Helper method to safely replace newlines with <br> tags
   formatInfoMessage(message: string | null): string {
     if (!message) return '';

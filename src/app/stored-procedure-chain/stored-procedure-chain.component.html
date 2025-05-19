@@ -74,6 +74,10 @@
       <p *ngIf="missingProcedures > 0" class="warning-summary">
         <strong>Missing Procedures:</strong> {{ missingProcedures }} (files not found)
       </p>
+      <p *ngIf="detectedCycles > 0" class="warning-summary cycle-warning">
+        <strong>Detected Cycles:</strong> {{ detectedCycles }} 
+        <span *ngIf="crossDomainCycles > 0">({{ crossDomainCycles }} cross domains)</span>
+      </p>
     </section>
 
     <section class="chain-graph" *ngIf="graphNodes.length > 0">
@@ -108,6 +112,29 @@
         <div class="legend-item">
           <span class="legend-color" style="background-color: #FF0000;"></span>
           <span>Outbound Call (when procedure selected)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Display cycles if detected -->
+    <section class="cycles-section" *ngIf="detectedCycles > 0">
+      <h3>Detected Procedure Cycles</h3>
+      <div class="cycles-warning">
+        <p>Warning: Cycles in stored procedure calls can lead to infinite recursion and stack overflow errors.</p>
+      </div>
+      <div class="cycle-list">
+        <div *ngFor="let cycle of procedureChain!.cycles; let i = index" class="cycle-item">
+          <h4>Cycle #{{ i + 1 }} <span *ngIf="cycle.isCrossDomain" class="cross-domain-badge">Cross-Domain</span></h4>
+          <div class="cycle-path">
+            <span *ngFor="let proc of cycle.procedures; let j = index">
+              {{ proc }}
+              <span *ngIf="j < cycle.procedures.length - 1" class="cycle-arrow">→</span>
+            </span>
+            <span class="cycle-arrow">→</span> <span>{{ cycle.procedures[0] }}</span>
+          </div>
+          <div class="cycle-domains">
+            <strong>Domains involved:</strong> {{ cycle.domains.join(', ') }}
+          </div>
         </div>
       </div>
     </section>

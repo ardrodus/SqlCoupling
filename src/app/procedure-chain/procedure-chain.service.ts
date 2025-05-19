@@ -13,10 +13,17 @@ export interface ProcedureNode {
   isMissing?: boolean; // Whether the procedure file was not found
 }
 
+export interface ProcedureCycle {
+  procedures: string[];  // Ordered list of procedures in the cycle
+  domains: string[];     // List of domains involved in the cycle
+  isCrossDomain: boolean; // Whether the cycle spans multiple domains
+}
+
 export interface ProcedureChain {
   nodes: ProcedureNode[];
   edges: ProcedureEdge[];
   rootProcedure: string | null;
+  cycles: ProcedureCycle[]; // Detected cycles in the procedure chain
 }
 
 export interface ProcedureEdge {
@@ -73,7 +80,7 @@ export class ProcedureChainService {
     const sqlContent = await this.readSqlFile(filePath);
     if (!sqlContent) {
       console.error(`Could not read file: ${filePath}`);
-      return { nodes, edges, rootProcedure: null };
+      return { nodes, edges, rootProcedure: null, cycles: [] };
     }
     
     // Extract procedure name and domain from file name
@@ -81,7 +88,7 @@ export class ProcedureChainService {
     
     if (!procedureInfo) {
       console.error(`Invalid procedure file name: ${path.basename(filePath)}`);
-      return { nodes, edges, rootProcedure: null };
+      return { nodes, edges, rootProcedure: null, cycles: [] };
     }
     
     // Process the root procedure and build the chain
@@ -109,10 +116,15 @@ export class ProcedureChainService {
     console.log(`Starting recursive procedure chain processing from ${rootNode.id}`);
     await this.processCalledProcedures(rootNode, nodes, edges, baseDirectoryPath);
     
+    // Detect cycles in the procedure chain
+    const cycles = this.detectCycles(nodes);
+    console.log(`Detected ${cycles.length} cycles in procedure chain`);
+    
     return { 
       nodes, 
       edges,
-      rootProcedure: rootNode.id
+      rootProcedure: rootNode.id,
+      cycles
     };
   }
   
@@ -213,7 +225,8 @@ export class ProcedureChainService {
     return {
       nodes,
       edges,
-      rootProcedure: 'FI_TestProcedure_SP'
+      rootProcedure: 'FI_TestProcedure_SP',
+      cycles: [] // No cycles in mock data
     };
   }
   
@@ -779,6 +792,110 @@ END
       return { name, domain };
     }
     return null;
+  }
+  
+  /**
+   * Detects cycles in the procedure chain using a depth-first search algorithm
+   * @param nodes List of procedure nodes
+   * @returns Array of detected cycles
+   */
+  private detectCycles(nodes: ProcedureNode[]): ProcedureCycle[] {
+    console.log(`Detecting cycles among ${nodes.length} procedures`);
+    
+    // Build a map of procedure name to node for quick lookup
+    const nodeMap = new Map<string, ProcedureNode>();
+    for (const node of nodes) {
+      nodeMap.set(node.id, node);
+    }
+    
+    // Track all detected cycles
+    const allCycles: ProcedureCycle[] = [];
+    
+    // Track global visited nodes to avoid redundant searches
+    const globalVisited = new Set<string>();
+    
+    // For each node, perform DFS to detect cycles
+    for (const node of nodes) {
+      if (globalVisited.has(node.id)) continue;
+      
+      // Track visited nodes in current DFS path
+      const visited = new Set<string>();
+      // Track the current path
+      const path: string[] = [];
+      
+      this.dfsDetectCycles(node.id, nodeMap, visited, path, allCycles, globalVisited);
+    }
+    
+    return allCycles;
+  }
+  
+  /**
+   * Helper method for cycle detection using depth-first search
+   */
+  private dfsDetectCycles(
+    currentId: string,
+    nodeMap: Map<string, ProcedureNode>,
+    visited: Set<string>,
+    path: string[],
+    allCycles: ProcedureCycle[],
+    globalVisited: Set<string>
+  ): void {
+    // Mark as globally visited to avoid redundant searches
+    globalVisited.add(currentId);
+    
+    // Check if we've already visited this node in current path (cycle detected)
+    if (visited.has(currentId)) {
+      // Find the start of the cycle in the path
+      const cycleStartIndex = path.indexOf(currentId);
+      if (cycleStartIndex !== -1) {
+        // Extract the cycle
+        const cycleProcedures = path.slice(cycleStartIndex).concat(currentId);
+        
+        // Build domains list
+        const domains = new Set<string>();
+        for (const procId of cycleProcedures) {
+          const node = nodeMap.get(procId);
+          if (node) {
+            domains.add(node.domain);
+          }
+        }
+        
+        // Create the cycle object
+        const cycle: ProcedureCycle = {
+          procedures: cycleProcedures,
+          domains: Array.from(domains),
+          isCrossDomain: domains.size > 1
+        };
+        
+        // Add to results if not already detected
+        const cycleKey = cycleProcedures.sort().join(',');
+        if (!allCycles.some(c => c.procedures.sort().join(',') === cycleKey)) {
+          console.log(`Detected cycle: ${cycleProcedures.join(' -> ')} -> ${currentId}`);
+          allCycles.push(cycle);
+        }
+      }
+      return;
+    }
+    
+    // Get the current node
+    const currentNode = nodeMap.get(currentId);
+    if (!currentNode) return; // Node not found, should not happen
+    
+    // Mark as visited in current path
+    visited.add(currentId);
+    path.push(currentId);
+    
+    // Recursively check all called procedures
+    for (const calledProcId of currentNode.calls) {
+      // Only follow the call if the procedure exists in our node map
+      if (nodeMap.has(calledProcId)) {
+        this.dfsDetectCycles(calledProcId, nodeMap, visited, path, allCycles, globalVisited);
+      }
+    }
+    
+    // Remove from current path when backtracking
+    path.pop();
+    visited.delete(currentId);
   }
   
 }
