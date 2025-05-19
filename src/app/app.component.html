@@ -41,89 +41,115 @@
       </p>
     </section>
 
-    <section class="graph-section" *ngIf="graphNodes.length > 0 || graphEdges.length > 0">
-      <h3>Dependency Graph</h3>
-      <app-graph-visualizer
-        [nodesData]="graphNodes"
-        [edgesData]="graphEdges"
-        [graphTitle]="showAllDependencies ? 'Directory Dependencies (All)' : 'Directory Cross-Domain Dependencies'">
-      </app-graph-visualizer>
-      
-      <div class="legend">
-        <div class="legend-item">
-          <span class="legend-color" style="background-color: #90EE90;"></span>
-          <span>Same-Domain Dependency</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color" style="background-color: #FF7F50;"></span>
-          <span>Cross-Domain Dependency</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color" style="background-color: #FFFF00;"></span>
-          <span>Inbound Dependency (when node selected)</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color" style="background-color: #FF0000;"></span>
-          <span>Outbound Dependency (when node selected)</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color" style="background-color: #FFFACD; border: 2px dashed #FF7F50; position: relative;">
-            <i class="fas fa-folder-open" style="position: absolute; font-size: 12px; top: 2px; left: 2px; color: #FF7F50;"></i>
-          </span>
-          <span>Virtual Directory (Referenced but not directly scanned)</span>
-        </div>
+    <!-- Tab Navigation -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'dependencies'" 
+          (click)="activeTab = 'dependencies'">
+          Dependencies
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'newFeature'" 
+          (click)="activeTab = 'newFeature'">
+          Statistics
+        </button>
       </div>
-    </section>
-    <section class="graph-section" *ngIf="parsedResult && (graphNodes.length === 0 && graphEdges.length === 0) && parsedResult.procedures.size > 0">
+    </div>
+
+    <!-- Dependencies Tab Content -->
+    <div *ngIf="activeTab === 'dependencies'">
+      <section class="graph-section" *ngIf="graphNodes.length > 0 || graphEdges.length > 0">
         <h3>Dependency Graph</h3>
-        <p>No dependencies found to graph. This could be due to:</p>
+        <app-graph-visualizer
+          [nodesData]="graphNodes"
+          [edgesData]="graphEdges"
+          [graphTitle]="showAllDependencies ? 'Directory Dependencies (All)' : 'Directory Cross-Domain Dependencies'">
+        </app-graph-visualizer>
+        
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background-color: #90EE90;"></span>
+            <span>Same-Domain Dependency</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background-color: #FF7F50;"></span>
+            <span>Cross-Domain Dependency</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background-color: #FFFF00;"></span>
+            <span>Inbound Dependency (when node selected)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background-color: #FF0000;"></span>
+            <span>Outbound Dependency (when node selected)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background-color: #FFFACD; border: 2px dashed #FF7F50; position: relative;">
+              <i class="fas fa-folder-open" style="position: absolute; font-size: 12px; top: 2px; left: 2px; color: #FF7F50;"></i>
+            </span>
+            <span>Virtual Directory (Referenced but not directly scanned)</span>
+          </div>
+        </div>
+      </section>
+      <section class="graph-section" *ngIf="parsedResult && (graphNodes.length === 0 && graphEdges.length === 0) && parsedResult.procedures.size > 0">
+          <h3>Dependency Graph</h3>
+          <p>No dependencies found to graph. This could be due to:</p>
+          <ul>
+            <li>No procedure calls detected between directories</li>
+            <li>All procedures are in the same directory</li>
+            <li>Procedure calls use non-standard patterns that couldn't be detected</li>
+          </ul>
+          <p>Try to select a higher-level directory containing multiple domain directories, or check your SQL files for proper procedure calls.</p>
+      </section>
+
+
+      <details class="details-section" *ngIf="totalDependencies > 0">
+        <summary>Cross-Domain Directory Dependencies List ({{ totalDependencies }})</summary>
         <ul>
-          <li>No procedure calls detected between directories</li>
-          <li>All procedures are in the same directory</li>
-          <li>Procedure calls use non-standard patterns that couldn't be detected</li>
+          <li *ngFor="let dep of parsedResult!.directoryDependencies">
+            <code>{{ dep.sourceDirectory }}</code> → <code>{{ dep.targetDirectory }}</code>
+          </li>
         </ul>
-        <p>Try to select a higher-level directory containing multiple domain directories, or check your SQL files for proper procedure calls.</p>
-    </section>
+      </details>
 
+      <details class="details-section" *ngIf="totalProcedures > 0">
+        <summary>Detected Procedures ({{ totalProcedures }})</summary>
+        <div class="procedure-list">
+          <table>
+            <thead>
+              <tr>
+                <th>Procedure Name (Domain)</th>
+                <th>Directory Path</th>
+                <th>File Path</th>
+                <th>Lines of Code</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let procEntry of parsedResult!.procedures | keyvalue">
+                <td>{{ procEntry.value.name }} ({{ procEntry.value.domain }})</td>
+                <td>{{ procEntry.value.directoryPath }}</td>
+                <td>{{ procEntry.value.filePath }}</td>
+                <td>{{ procEntry.value.lineCount }}</td>
+                <td>
+                  <button class="debug-btn" (click)="debugProcedure(procEntry.value.name)" title="Show procedure calls">
+                    Debug Calls
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
 
-    <details class="details-section" *ngIf="totalDependencies > 0">
-      <summary>Cross-Domain Directory Dependencies List ({{ totalDependencies }})</summary>
-      <ul>
-        <li *ngFor="let dep of parsedResult!.directoryDependencies">
-          <code>{{ dep.sourceDirectory }}</code> → <code>{{ dep.targetDirectory }}</code>
-        </li>
-      </ul>
-    </details>
-
-    <details class="details-section" *ngIf="totalProcedures > 0">
-      <summary>Detected Procedures ({{ totalProcedures }})</summary>
-      <div class="procedure-list">
-        <table>
-          <thead>
-            <tr>
-              <th>Procedure Name (Domain)</th>
-              <th>Directory Path</th>
-              <th>File Path</th>
-              <th>Lines of Code</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let procEntry of parsedResult!.procedures | keyvalue">
-              <td>{{ procEntry.value.name }} ({{ procEntry.value.domain }})</td>
-              <td>{{ procEntry.value.directoryPath }}</td>
-              <td>{{ procEntry.value.filePath }}</td>
-              <td>{{ procEntry.value.lineCount }}</td>
-              <td>
-                <button class="debug-btn" (click)="debugProcedure(procEntry.value.name)" title="Show procedure calls">
-                  Debug Calls
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </details>
+    <!-- Stored Procedure Chain Tab Content -->
+    <div *ngIf="activeTab === 'newFeature'" class="new-feature-tab">
+      <app-procedure-chain [parsedResult]="parsedResult"></app-procedure-chain>
+    </div>
     
     <!-- Debug modal for procedure calls -->
     <div *ngIf="debugInfo" class="debug-modal">

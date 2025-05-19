@@ -1,0 +1,45 @@
+<section class="domain-statistics">
+  <h3>SQL Procedure Statistics by Domain</h3>
+  
+  <div class="stats-container">
+    <div class="stats-header">
+      <div class="stat-cell">Domain</div>
+      <div class="stat-cell">Procedures</div>
+      <div class="stat-cell">Total Lines</div>
+      <div class="stat-cell">Avg Lines</div>
+      <div class="stat-cell">% of Codebase</div>
+    </div>
+    
+    <div class="stats-rows">
+      <div class="stats-row" *ngFor="let domainStat of getDomainStatistics()">
+        <div class="stat-cell domain">{{ domainStat.domain }}</div>
+        <div class="stat-cell">{{ domainStat.procedureCount }}</div>
+        <div class="stat-cell">{{ domainStat.totalLines }}</div>
+        <div class="stat-cell">{{ domainStat.avgLines | number:'1.0-1' }}</div>
+        <div class="stat-cell">{{ domainStat.percentage | percent:'1.1-1' }}</div>
+      </div>
+    </div>
+    
+    <div class="stats-footer">
+      <div class="stat-cell">Total</div>
+      <div class="stat-cell">{{ getTotalProcedures() }}</div>
+      <div class="stat-cell">{{ getTotalLinesOfCode() }}</div>
+      <div class="stat-cell">{{ getTotalAvgLines() | number:'1.0-1' }}</div>
+      <div class="stat-cell">100%</div>
+    </div>
+  </div>
+</section>
+
+<section class="domain-chart">
+  <h3>Domain Size Distribution</h3>
+  <div class="chart-container">
+    <div class="bar-chart">
+      <div class="bar-container" *ngFor="let domainStat of getDomainStatistics()">
+        <div class="bar-label">{{ domainStat.domain }}</div>
+        <div class="bar" [style.width.%]="domainStat.percentage * 100" [style.background-color]="getDomainColor(domainStat.domain)">
+          {{ domainStat.percentage | percent:'1.0-0' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

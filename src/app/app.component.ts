@@ -11,6 +11,8 @@ interface DebugInfo {
   calls: string[];
 }
 
+// Debug info interface only - domain statistics moved to ProcedureChainComponent
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -28,6 +30,7 @@ export class AppComponent {
   selectedDirectoryPath: string | null = null;
   showAllDependencies: boolean = true; // Default to showing all dependencies
   debugInfo: DebugInfo | null = null; // For debugging procedure calls
+  activeTab: string = 'dependencies'; // Default active tab
 
   constructor(
     private sqlParser: SqlParserService,
@@ -204,4 +207,6 @@ export class AppComponent {
   closeDebug(): void {
     this.debugInfo = null;
   }
+  
+  // Statistics methods moved to ProcedureChainComponent
 }
