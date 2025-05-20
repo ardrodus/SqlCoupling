@@ -79,6 +79,91 @@
         <span *ngIf="crossDomainCycles > 0">({{ crossDomainCycles }} cross domains)</span>
       </p>
     </section>
+    
+    <!-- Advanced Metrics Section -->
+    <section class="advanced-metrics" *ngIf="procedureChain?.metrics">
+      <h3>Advanced Chain Metrics</h3>
+      
+      <div class="metrics-container">
+        <div class="metrics-panel">
+          <h4>Chain Complexity</h4>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <span class="metric-label">Max Call Depth:</span>
+              <span class="metric-value">{{ procedureChain!.metrics.maxCallDepth }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Avg Call Depth:</span>
+              <span class="metric-value">{{ procedureChain!.metrics.avgCallDepth }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Entry Points:</span>
+              <span class="metric-value">{{ procedureChain!.metrics.entryPoints }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Leaf Nodes:</span>
+              <span class="metric-value">{{ procedureChain!.metrics.leafNodes }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Cyclomatic Complexity:</span>
+              <span class="metric-value">{{ procedureChain!.metrics.cyclomaticComplexity }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="metrics-panel">
+          <h4>Domain Coupling</h4>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <span class="metric-label">Domain Coupling Score:</span>
+              <span class="metric-value">{{ procedureChain!.metrics.domainCouplingScore }}%</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Cross-Domain Ratio:</span>
+              <span class="metric-value">{{ (procedureChain!.metrics.crossDomainRatio * 100).toFixed(1) }}%</span>
+            </div>
+          </div>
+          
+          <h5>Domain Details</h5>
+          <table class="domain-metrics-table">
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Procedures</th>
+                <th>Internal</th>
+                <th>Inbound</th>
+                <th>Outbound</th>
+                <th>Coupling</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let domain of procedureChain!.metrics.domains">
+                <td>{{ domain.name }}</td>
+                <td>{{ domain.procedureCount }}</td>
+                <td>{{ domain.internalCalls }}</td>
+                <td>{{ domain.inboundCalls }}</td>
+                <td>{{ domain.outboundCalls }}</td>
+                <td>{{ domain.couplingScore.toFixed(1) }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Hotspot Procedures -->
+      <div class="hotspot-procedures" *ngIf="procedureChain!.metrics.hotspotProcedures.length > 0">
+        <h4>Hotspot Procedures</h4>
+        <p class="metrics-info">These procedures are called most frequently and represent critical components in your codebase:</p>
+        <ul class="hotspot-list">
+          <li *ngFor="let proc of procedureChain!.metrics.hotspotProcedures">
+            {{ proc }} 
+            <span class="hotspot-count" *ngIf="getCallerCount(proc) > 0">
+              ({{ getCallerCount(proc) }} callers)
+            </span>
+          </li>
+        </ul>
+      </div>
+    </section>
 
     <section class="chain-graph" *ngIf="graphNodes.length > 0">
       <h3>Execution Chain Graph</h3>
@@ -147,20 +232,28 @@
             <th>Procedure Name</th>
             <th>Domain</th>
             <th>Level</th>
-            <th>Calls</th>
+            <th>Calls Out</th>
+            <th>Called By</th>
+            <th>Complexity</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let node of procedureChain!.nodes" [class.root-procedure]="node.isRoot" [class.missing-procedure]="node.isMissing">
+          <tr *ngFor="let node of procedureChain!.nodes" 
+              [class.root-procedure]="node.isRoot" 
+              [class.missing-procedure]="node.isMissing"
+              [class.critical-procedure]="node.metrics?.isCritical">
             <td>{{ node.name }}</td>
             <td>{{ node.domain }}</td>
             <td>{{ node.level }}</td>
             <td>{{ node.calls.length }}</td>
+            <td>{{ node.calledBy?.length || 0 }}</td>
+            <td>{{ node.metrics?.complexityScore || 'N/A' }}</td>
             <td>
               <span *ngIf="node.isRoot" class="status-badge root">Root</span>
               <span *ngIf="node.isMissing" class="status-badge missing">Missing</span>
-              <span *ngIf="!node.isRoot && !node.isMissing" class="status-badge normal">Found</span>
+              <span *ngIf="node.metrics?.isCritical" class="status-badge critical">Critical</span>
+              <span *ngIf="!node.isRoot && !node.isMissing && !node.metrics?.isCritical" class="status-badge normal">Normal</span>
             </td>
           </tr>
         </tbody>

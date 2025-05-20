@@ -232,11 +232,13 @@ export class StoredProcedureChainComponent {
   }
 
   private prepareGraphData(chain: ProcedureChain): void {
+    console.time('prepareGraphData');
+    
     // Convert procedure nodes to graph nodes
     this.graphNodes = chain.nodes.map(proc => ({
       id: proc.id,
       label: proc.name,
-      title: `${proc.name}\nPath: ${proc.filePath}\nCalls: ${proc.calls.length}`,
+      title: `${proc.name}\nPath: ${proc.filePath}\nCalls: ${proc.calls.length}${proc.metrics?.isCritical ? '\nCritical Procedure' : ''}`,
       level: proc.level,
       domain: proc.domain,
       isRoot: proc.isRoot || false,
@@ -244,13 +246,15 @@ export class StoredProcedureChainComponent {
     }));
 
     // Convert procedure edges to graph edges
-    this.graphEdges = chain.edges.map((edge, index) => ({
+    this.graphEdges = chain.edges.map((edge) => ({
       id: edge.id,
       from: edge.from,
       to: edge.to,
       isCrossDomain: edge.isCrossDomain,
       title: edge.isCrossDomain ? 'Cross-Domain Call' : 'Same-Domain Call'
     }));
+    
+    console.timeEnd('prepareGraphData');
   }
 
   get totalProcedures(): number {
@@ -275,6 +279,12 @@ export class StoredProcedureChainComponent {
   
   get crossDomainCycles(): number {
     return this.procedureChain?.cycles?.filter(c => c.isCrossDomain).length || 0;
+  }
+  
+  // Get the number of callers for a procedure (for hotspots display)
+  getCallerCount(procedureId: string): number {
+    const node = this.procedureChain?.nodes.find(n => n.id === procedureId);
+    return node?.calledBy?.length || 0;
   }
   
   // Helper method to safely replace newlines with <br> tags
