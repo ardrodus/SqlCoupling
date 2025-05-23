@@ -1,27 +1,66 @@
 <!-- src/app/app.component.html -->
-<div class="container">
-  <header>
-    <h1>{{ appTitle }}</h1>
-  </header>
+<div class="app-container">
+  <!-- Burger Menu Button -->
+  <button class="burger-menu" (click)="toggleSideMenu()" [attr.aria-label]="sideMenuOpen ? 'Close menu' : 'Open menu'" [title]="sideMenuOpen ? 'Close menu' : 'Open navigation menu'">
+    <span class="burger-line" [class.open]="sideMenuOpen"></span>
+    <span class="burger-line" [class.open]="sideMenuOpen"></span>
+    <span class="burger-line" [class.open]="sideMenuOpen"></span>
+    <span class="menu-tooltip">{{ sideMenuOpen ? 'Close' : 'Menu' }}</span>
+  </button>
 
-  <!-- Main Navigation Menu -->
-  <nav class="main-menu">
-    <ul>
+  <!-- Side Menu Overlay -->
+  <div class="side-menu-overlay" [class.active]="sideMenuOpen" (click)="closeSideMenu()"></div>
+
+  <!-- Side Navigation Menu -->
+  <nav class="side-menu" [class.open]="sideMenuOpen">
+    <div class="side-menu-header">
+      <h2>SQL Analyzer</h2>
+      <button class="close-menu" (click)="closeSideMenu()" aria-label="Close menu">
+        <span>&times;</span>
+      </button>
+    </div>
+    <ul class="side-menu-list">
       <li [class.active]="activeFeature === 'dependency-analyzer'">
-        <a href="#" (click)="selectFeature('dependency-analyzer', $event)">Directory Dependency Analyzer</a>
+        <a href="#" (click)="selectFeature('dependency-analyzer', $event)">
+          <span class="menu-icon">📊</span>
+          <span class="menu-text">Directory Dependency Analyzer</span>
+        </a>
       </li>
       <li [class.active]="activeFeature === 'procedure-chain'">
-        <a href="#" (click)="selectFeature('procedure-chain', $event)">Stored Procedure Chain Analyzer</a>
+        <a href="#" (click)="selectFeature('procedure-chain', $event)">
+          <span class="menu-icon">🔗</span>
+          <span class="menu-text">Stored Procedure Chain Analyzer</span>
+        </a>
       </li>
     </ul>
   </nav>
 
-  <!-- Status Messages (common for all features) -->
-  <div *ngIf="isLoading || infoMessage" class="status-messages">
-    <p *ngIf="isLoading" class="loading">
-      <span class="spinner"></span> {{ infoMessage || 'Loading...' }}
-    </p>
-    <p *ngIf="!isLoading && infoMessage" class="info">{{ infoMessage }}</p>
+  <!-- Main Content Area -->
+  <div class="main-content" [class.menu-open]="sideMenuOpen">
+    <header>
+      <h1>{{ appTitle }}</h1>
+    </header>
+
+  <!-- Loading Bar and Status Messages (common for all features) -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-container">
+      <div class="loading-header">
+        <span class="spinner"></span>
+        <h3>Analyzing SQL Files</h3>
+      </div>
+      <div class="loading-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="loadingProgress"></div>
+        </div>
+        <p class="progress-text">{{ loadingProgress }}% Complete</p>
+      </div>
+      <p class="loading-message">{{ infoMessage || 'Processing files...' }}</p>
+      <p class="loading-hint">Large codebases may take a few moments to analyze</p>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && infoMessage" class="status-messages">
+    <p class="info">{{ infoMessage }}</p>
   </div>
 
   <div *ngIf="errorMessage" class="status-messages error">
@@ -199,5 +238,6 @@
     </div>
     
     <app-stored-procedure-chain></app-stored-procedure-chain>
+  </div>
   </div>
 </div>

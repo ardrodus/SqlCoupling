@@ -27,6 +27,7 @@ export class AppComponent {
   errorMessage: string | null = null;
   infoMessage: string | null = null;
   isLoading: boolean = false;
+  loadingProgress: number = 0; // Progress percentage for loading bar
   selectedDirectoryPath: string | null = null;
   showAllDependencies: boolean = true; // Default to showing all dependencies
   debugInfo: DebugInfo | null = null; // For debugging procedure calls
@@ -34,6 +35,7 @@ export class AppComponent {
   // Navigation state
   activeFeature: string = 'dependency-analyzer'; // Main feature selection
   dirAnalysisTab: string = 'dependencies'; // Tab within directory analysis feature
+  sideMenuOpen: boolean = false; // Side menu toggle state
 
   constructor(
     private sqlParser: SqlParserService,
@@ -42,6 +44,7 @@ export class AppComponent {
 
   async selectAndAnalyzeDirectory(): Promise<void> {
     this.isLoading = true;
+    this.loadingProgress = 0;
     this.errorMessage = null;
     this.infoMessage = "Requesting directory selection...";
     this.parsedResult = null;
@@ -49,6 +52,9 @@ export class AppComponent {
     this.graphEdges = [];
     this.selectedDirectoryPath = null;
     this.cdr.detectChanges(); // Update UI
+    
+    // Simulate progress updates
+    this.simulateProgress();
 
     try {
       // Get selected directory from Electron main process (via preload)
@@ -56,10 +62,25 @@ export class AppComponent {
         const dirPath = await window.electronAPI.openDirectoryDialog();
         if (dirPath) {
           this.selectedDirectoryPath = dirPath;
-          this.infoMessage = `Selected directory: ${dirPath}. Analyzing...`;
+          this.loadingProgress = 10;
+          this.infoMessage = `Scanning directory: ${dirPath}`;
           this.cdr.detectChanges();
+          
+          // Analyze directory with progress updates
+          this.loadingProgress = 20;
+          this.infoMessage = `Finding SQL files...`;
+          this.cdr.detectChanges();
+          
           this.parsedResult = await this.sqlParser.analyzeDirectory(dirPath, this.showAllDependencies); // Pass the directory path and dependency filter setting
+          
+          this.loadingProgress = 90;
+          this.infoMessage = `Finalizing analysis...`;
+          this.cdr.detectChanges();
+          
+          // Complete
+          this.loadingProgress = 100;
           this.infoMessage = `Analysis complete for: ${dirPath}.`;
+          this.cdr.detectChanges();
 
           if (this.parsedResult) {
             if (this.parsedResult.errors.length > 0) {
@@ -224,6 +245,58 @@ export class AppComponent {
     this.infoMessage = null;
     
     this.activeFeature = feature;
+    
+    // Close side menu on mobile after selection
+    this.closeSideMenu();
+    
     this.cdr.detectChanges();
+  }
+
+  /**
+   * Toggle the side menu open/closed
+   */
+  toggleSideMenu(): void {
+    this.sideMenuOpen = !this.sideMenuOpen;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Close the side menu
+   */
+  closeSideMenu(): void {
+    this.sideMenuOpen = false;
+    this.cdr.detectChanges();
+  }
+  
+  /**
+   * Simulate progress updates during analysis
+   */
+  private simulateProgress(): void {
+    const progressInterval = setInterval(() => {
+      if (!this.isLoading || this.loadingProgress >= 80) {
+        clearInterval(progressInterval);
+        return;
+      }
+      
+      // Increment progress gradually
+      if (this.loadingProgress < 30) {
+        this.loadingProgress += 5;
+      } else if (this.loadingProgress < 60) {
+        this.loadingProgress += 3;
+      } else {
+        this.loadingProgress += 1;
+      }
+      
+      // Update messages based on progress
+      if (this.loadingProgress > 30 && this.loadingProgress <= 40) {
+        this.infoMessage = 'Parsing SQL procedures...';
+      } else if (this.loadingProgress > 40 && this.loadingProgress <= 60) {
+        this.infoMessage = 'Analyzing dependencies...';
+      } else if (this.loadingProgress > 60 && this.loadingProgress <= 80) {
+        this.infoMessage = 'Building dependency graph...';
+      }
+      
+      this.cdr.detectChanges();
+    }, 200); // Update every 200ms
   }
 }
